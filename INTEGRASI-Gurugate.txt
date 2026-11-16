@@ -1,0 +1,26 @@
+PATCH INTEGRASI KE GuruGate.gs (TAMBAHAN SAJA)
+=============================================
+Jangan ganti atau menghapus isi GuruGate.gs. Tambahkan file KelasLiveAdminServer.gs ke proyek yang sama.
+
+1) Di doPost(e), setelah blok yang menangani aksi gg_ dan sebelum `const lock=LockService.getScriptLock();`, tambahkan:
+
+  if (ggBody && (String(ggBody.a||'').indexOf('kla_')===0)) {
+    var klaOut = klaDispatch_(e, ggBody);
+    return ContentService.createTextOutput(JSON.stringify(klaOut))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (e && e.parameter && e.parameter.a === 'midtrans_notification') {
+    var klaNotice = klaDispatch_(e, ggBody || {});
+    return ContentService.createTextOutput(JSON.stringify(klaNotice))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+2) Di doGet(e), setelah `const p=(e&&e.parameter)||{};`, tambahkan:
+
+  if (p.a === 'kla_device_check') {
+    return output_(klaCheckDevice_(p.device_id || ''), p.callback);
+  }
+
+3) Jangan membuat doGet atau doPost kedua. Simpan dan deploy sebagai New version.
+
+PENTING: endpoint notifikasi Midtrans harus publik agar Midtrans dapat memanggilnya. Keaslian notifikasi tetap diverifikasi menggunakan signature SHA-512 dan Server Key di backend. Endpoint admin lain wajib memakai session token owner.
